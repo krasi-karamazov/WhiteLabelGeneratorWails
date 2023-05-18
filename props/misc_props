@@ -1,0 +1,10 @@
+dynamic_merchant_logo_enabled=true
+app_loading=@drawable/paynt_logo
+app_icon=@drawable/paynt_logo
+app_logo=@drawable/paynt_logo
+font_path_regular=Poppins-Regular.ttf
+font_path_bold=Poppins-Bold.ttf
+font_path_italic=Poppins-Italic.ttf
+font_path_bolditalic=Poppins-BoldItalic.ttf
+retry_codes=1,2,8,12,21,25,28,33,54,56,62,63,65,68,77,78,79,80,82,83,88,89,91,92,96,97,98,99,11008,11010,11011,11013
+faq_url=https://paynt.com/wp-content/uploads/2022/08/Paynt-Now-FAQ-v1.1.1.pdf
