@@ -17,6 +17,7 @@ import {MiscPropsEditScreen} from "./misc/MiscPropsEditScreen";
 import {LogPrint} from "../wailsjs/runtime";
 import {FileWithPath} from "@mantine/dropzone";
 import {checkForErrors} from "./utils/ErrorHandler";
+import {getBytesFromFile} from "./utils/FileUtils";
 
 function App() {
 
@@ -53,7 +54,7 @@ function App() {
     const renderScreen = () => {
         switch (navOption) {
             case 0:
-                return <AppInfoScreen selectedData={selectedData} onChange={(selected: string) => {
+                return <AppInfoScreen selectedData={getDataByName(selectedPropsPage)} onChange={(selected: string) => {
                     handlePropsPageChange(selected)
                 }} stateChanger={stageChanger} onZipReady={setZipFile} onJsonFileReady={setJsonFile} onAppNameChange={(appName: string)=> {
                     setAppName(appName)
@@ -114,7 +115,6 @@ function App() {
             appPackage,
             zipFile,
             jsonFile)
-
         if(errors.length > 0) {
             modals.open({
                 title: "There be errors. Argh!",
@@ -130,8 +130,16 @@ function App() {
                 )
             })
         } else {
-            Save(envPropertiesData).then(() => {
-                LogPrint("Saved")
+            getBytesFromFile(zipFile).then((zipFile)=> {
+                getBytesFromFile(jsonFile).then((jsonValue) => {
+                    Save(appName, appPackage, envPropertiesData, zipFile, jsonValue).then((err) => {
+                        if(err != null && err.error != null){
+                            LogPrint("Error saving whitelabel")
+                        } else {
+                            LogPrint("Saved")
+                        }
+                    })
+                })
             })
         }
     }

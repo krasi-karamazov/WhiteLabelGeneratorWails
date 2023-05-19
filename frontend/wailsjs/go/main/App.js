@@ -6,6 +6,6 @@ export function ReadProperties() {
   return window['go']['main']['App']['ReadProperties']();
 }
 
-export function Save(arg1) {
-  return window['go']['main']['App']['Save'](arg1);
+export function Save(arg1, arg2, arg3, arg4, arg5) {
+  return window['go']['main']['App']['Save'](arg1, arg2, arg3, arg4, arg5);
 }

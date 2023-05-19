@@ -2,9 +2,18 @@ package main
 
 import (
 	"context"
+	"main/fileutils"
 	"os"
 	"strings"
 )
+
+func filesToRead() []string {
+	return []string{"stage-release.properties", "playstore.properties", "non-playstore.properties", "colors", "misc_props"}
+}
+
+func propsNames() []string {
+	return []string{"staging", "playstore", "nonplaystore", "colors", "misc_props"}
+}
 
 // App struct
 type App struct {
@@ -42,16 +51,20 @@ type PropertiesData struct {
 	Data []string `json:"data"`
 }
 
+type SaveError struct {
+	Error string `json:"error"`
+	Type  string `json:"type"`
+}
+
 func (a *App) ReadProperties() []PropertiesData {
 	var props []PropertiesData
-	filesToRead := []string{"stage-release.properties", "playstore.properties", "non-playstore.properties", "colors", "misc_props"}
-	names := []string{"staging", "playstore", "nonplaystore", "colors", "misc_props"}
+
 	workingDir, err := os.Getwd()
 	if err == nil {
-		for i := range filesToRead {
-			path := workingDir + "\\props\\" + filesToRead[i]
+		for i := range filesToRead() {
+			path := workingDir + "\\props\\" + filesToRead()[i]
 			props = append(props, PropertiesData{
-				Name: names[i],
+				Name: propsNames()[i],
 				Data: readFile(path),
 			})
 
@@ -62,12 +75,99 @@ func (a *App) ReadProperties() []PropertiesData {
 	return props
 }
 
-func (a *App) Save(data []PropertiesData) {
-	for i := range data {
-		println(data[i].Name)
-		for j := range data[i].Data {
-			println(data[i].Data[j])
+func (a *App) Save(appName string, appPackage string, data []PropertiesData, zipFile []byte, jsonFile []byte) *SaveError {
+	var saveErrorPtr *SaveError = nil
+	var errorType string
+	err := writePropertiesData(appName, data)
+	errorType = "write_props"
+
+	err = writeColors(appName, data)
+	errorType = "write_colors"
+
+	err = writeMisc(appName, data)
+	errorType = "write_colors"
+
+	if err != nil {
+		var saveError = SaveError{
+			err.Error(),
+			errorType,
 		}
-		println("-------------------------------")
+		saveErrorPtr = &saveError
 	}
+	return saveErrorPtr
+}
+
+func writeMisc(appName string, data []PropertiesData) error {
+	fileName := "client_flavor.xml"
+	file, err := fileutils.CreateFile(appName+"\\res\\values\\", fileName)
+	if err != nil {
+		println(err.Error())
+		return err
+	}
+	colorsData := getPropsByName("colors", data)
+	_, err = file.WriteString(colorsData.toXmlString("color"))
+	return err
+}
+
+func writeColors(appName string, data []PropertiesData) error {
+	fileName := "client_flavor.xml"
+	file, err := fileutils.CreateFile(appName+"\\res\\values\\", fileName)
+	if err != nil {
+		println(err.Error())
+		return err
+	}
+	colorsData := getPropsByName("colors", data)
+	_, err = file.WriteString(colorsData.toXmlString("color"))
+	return err
+}
+
+func writePropertiesData(appName string, data []PropertiesData) error {
+	fileNames := []string{appName + "-stage-release.properties", appName + "-playstore.properties", appName + "-non-playstore.properties"}
+
+	for i := range fileNames {
+		file, err := fileutils.CreateFile(appName, fileNames[i])
+		if err != nil {
+			return err
+		}
+		propsData := getPropsByName(propsNames()[i], data)
+		_, err = file.WriteString(propsData.toString())
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (p *PropertiesData) toString() string {
+	var stringBuilder strings.Builder
+	for i := range p.Data {
+		stringBuilder.WriteString(p.Data[i] + "\n")
+	}
+	return stringBuilder.String()
+}
+
+func (p *PropertiesData) toXmlString(nodeType string) string {
+	var stringBuilder strings.Builder
+	for i := range p.Data {
+		propertyParts := strings.Split(p.Data[i], "=")
+		stringBuilder.WriteString("<")
+		stringBuilder.WriteString(nodeType)
+		stringBuilder.WriteString(" name=\"")
+		stringBuilder.WriteString(strings.TrimSpace(propertyParts[0]))
+		stringBuilder.WriteString("\">")
+		stringBuilder.WriteString(strings.TrimSpace(propertyParts[1]))
+		stringBuilder.WriteString("</")
+		stringBuilder.WriteString(nodeType)
+		stringBuilder.WriteString(">\n")
+	}
+	return stringBuilder.String()
+}
+
+func getPropsByName(name string, data []PropertiesData) *PropertiesData {
+	for i := range data {
+		if data[i].Name == name {
+			return &data[i]
+		}
+	}
+	return nil
 }
