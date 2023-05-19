@@ -26,7 +26,7 @@ func NewApp() *App {
 }
 
 // startup is called when the app starts. The context is saved
-// so we can call the runtime methods
+// ,so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 }
@@ -41,7 +41,7 @@ func readFile(path string) []string {
 	if err != nil {
 		return nil
 	}
-	propsDataString := string(propsData)
+	propsDataString := strings.TrimSpace(string(propsData))
 	props := strings.Split(propsDataString, "\n")
 	return props
 }
@@ -80,12 +80,11 @@ func (a *App) Save(appName string, appPackage string, data []PropertiesData, zip
 	var errorType string
 	err := writePropertiesData(appName, data)
 	errorType = "write_props"
-
-	err = writeColors(appName, data)
-	errorType = "write_colors"
-
-	err = writeMisc(appName, data)
-	errorType = "write_colors"
+	err, errType := writeClientFlavor(appName, data)
+	if err != nil {
+		errorType = errType
+		return nil
+	}
 
 	if err != nil {
 		var saveError = SaveError{
@@ -97,27 +96,43 @@ func (a *App) Save(appName string, appPackage string, data []PropertiesData, zip
 	return saveErrorPtr
 }
 
-func writeMisc(appName string, data []PropertiesData) error {
+func writeClientFlavor(appName string, data []PropertiesData) (error, string) {
 	fileName := "client_flavor.xml"
 	file, err := fileutils.CreateFile(appName+"\\res\\values\\", fileName)
 	if err != nil {
-		println(err.Error())
-		return err
+		return err, "file_creation"
 	}
-	colorsData := getPropsByName("colors", data)
-	_, err = file.WriteString(colorsData.toXmlString("color"))
+	_, err = file.WriteString("<?xml version=\"1.0\" encoding=\"utf-8\"?>\r<resources>\n")
+	if err != nil {
+		return err, "file_xml_namespace"
+	}
+	err = writeColors(file, appName, data, fileName)
+	if err != nil {
+		return err, "file_colors"
+	}
+
+	err = writeMisc(file, appName, data, fileName)
+	if err != nil {
+		return err, "file_misc"
+	}
+
+	_, err = file.WriteString("</resources>\r")
+	if err != nil {
+		return err, "file_finish"
+	}
+	defer file.Close()
+	return nil, ""
+}
+
+func writeMisc(file *os.File, appName string, data []PropertiesData, fileName string) error {
+	miscData := getPropsByName("misc_props", data)
+	_, err := file.WriteString(miscData.toXmlString())
 	return err
 }
 
-func writeColors(appName string, data []PropertiesData) error {
-	fileName := "client_flavor.xml"
-	file, err := fileutils.CreateFile(appName+"\\res\\values\\", fileName)
-	if err != nil {
-		println(err.Error())
-		return err
-	}
+func writeColors(file *os.File, appName string, data []PropertiesData, fileName string) error {
 	colorsData := getPropsByName("colors", data)
-	_, err = file.WriteString(colorsData.toXmlString("color"))
+	_, err := file.WriteString(colorsData.toXmlString())
 	return err
 }
 
@@ -126,6 +141,7 @@ func writePropertiesData(appName string, data []PropertiesData) error {
 
 	for i := range fileNames {
 		file, err := fileutils.CreateFile(appName, fileNames[i])
+
 		if err != nil {
 			return err
 		}
@@ -146,10 +162,11 @@ func (p *PropertiesData) toString() string {
 	return stringBuilder.String()
 }
 
-func (p *PropertiesData) toXmlString(nodeType string) string {
+func (p *PropertiesData) toXmlString() string {
 	var stringBuilder strings.Builder
 	for i := range p.Data {
 		propertyParts := strings.Split(p.Data[i], "=")
+		nodeType := getNodeType(propertyParts)
 		stringBuilder.WriteString("<")
 		stringBuilder.WriteString(nodeType)
 		stringBuilder.WriteString(" name=\"")
@@ -161,6 +178,18 @@ func (p *PropertiesData) toXmlString(nodeType string) string {
 		stringBuilder.WriteString(">\n")
 	}
 	return stringBuilder.String()
+}
+
+func getNodeType(parts []string) string {
+	if strings.Contains(parts[1], "@drawable") {
+		return "drawable"
+	} else if parts[1] == "true" || parts[1] == "false" {
+		return "bool"
+	} else if strings.HasPrefix(parts[1], "#") {
+		return "color"
+	} else {
+		return "string"
+	}
 }
 
 func getPropsByName(name string, data []PropertiesData) *PropertiesData {

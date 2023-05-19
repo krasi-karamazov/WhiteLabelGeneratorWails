@@ -29,7 +29,13 @@ func checkIfFileExistsOtherwiseCreate(dir string, fileName string) (*os.File, er
 }
 
 func createFile(path string) (*os.File, error) {
-	if file, err := os.Create(path); err == nil {
+	if _, err := os.Stat(path); err == nil {
+		err = os.Remove(path)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
 		return file, nil
 	} else {
 		return nil, err
