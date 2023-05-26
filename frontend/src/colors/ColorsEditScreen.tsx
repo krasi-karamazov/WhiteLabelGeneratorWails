@@ -3,8 +3,9 @@
 import {main} from "../../wailsjs/go/models";
 import PropertiesData = main.PropertiesData;
 import {useEffect, useRef, useState} from "react";
-import {Button, Card, ColorInput, ColorSwatch, Grid, Group, Space, Text, TextInput} from "@mantine/core";
+import {ActionIcon, Button, Card, ColorInput, ColorSwatch, Grid, Group, Space, Text, TextInput} from "@mantine/core";
 import {modals} from "@mantine/modals";
+import {IconTrash} from "@tabler/icons-react";
 
 export interface ColorsEditProps{
     selectedData: PropertiesData
@@ -44,6 +45,15 @@ export function ColorsEditScreen({selectedData, stateChanger}: ColorsEditProps) 
                         }} >
                             Submit
                         </Button>
+                        <ActionIcon color={'red'} variant="filled" onClick={()=> {
+                            const halfBeforeTheUnwantedElement = selectedData.data.slice(0, index)
+                            const halfAfterTheUnwantedElement = selectedData.data.slice(index + 1, selectedData.data.length)
+                            selectedData.data = halfBeforeTheUnwantedElement.concat(halfAfterTheUnwantedElement)
+                            stateChanger(selectedData)
+                            resetEditState()
+                        }}>
+                            <IconTrash size="1.125rem" />
+                        </ActionIcon>
                     </Group>
                 </>
 

@@ -4,7 +4,8 @@ import {main} from "../../wailsjs/go/models";
 import PropertiesData = main.PropertiesData;
 import {ChangeEvent, useEffect, useRef, useState} from "react";
 import {modals} from "@mantine/modals";
-import {Button, Card, Grid, Group, Space, Text, TextInput} from "@mantine/core";
+import {ActionIcon, Button, Card, Grid, Group, Space, Text, TextInput} from "@mantine/core";
+import {IconTrash} from "@tabler/icons-react";
 
 
 export interface MiscEditProps{
@@ -42,6 +43,15 @@ export function MiscPropsEditScreen ({selectedData, stateChanger}: MiscEditProps
                         }} >
                             Submit
                         </Button>
+                        <ActionIcon color={'red'} variant="filled" onClick={()=> {
+                            const halfBeforeTheUnwantedElement = selectedData.data.slice(0, index)
+                            const halfAfterTheUnwantedElement = selectedData.data.slice(index + 1, selectedData.data.length)
+                            selectedData.data = halfBeforeTheUnwantedElement.concat(halfAfterTheUnwantedElement)
+                            stateChanger(selectedData)
+                            resetEditState()
+                        }}>
+                            <IconTrash size="1.125rem" />
+                        </ActionIcon>
                     </Group>
                 </>
 
