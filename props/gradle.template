@@ -1,0 +1,13 @@
+android {
+    productFlavors {
+        [app-name] {
+            dimension "client"
+            javaCompileOptions {
+                annotationProcessorOptions {
+                    arguments = ["resourcePackageName": "digital.paynetics.phos"]
+                }
+            }
+            applicationId "[app-package]"
+        }
+    }
+}

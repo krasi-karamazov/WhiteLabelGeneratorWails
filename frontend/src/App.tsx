@@ -1,23 +1,20 @@
 import './App.css';
 import {
-    Button, Card, ColorSwatch, Grid,
-    Group,
     LoadingOverlay,
-    MantineProvider, Text, TextInput,
+    MantineProvider
 } from '@mantine/core';
 import {AppInfoScreen} from "./appinfoandprops/AppInfoScreen";
-import {ChangeEvent, useEffect, useState} from "react";
+import {useEffect, useState} from "react";
 import {main} from "../wailsjs/go/models";
 import {ReadProperties, Save} from "../wailsjs/go/main/App";
-import {modals, ModalsProvider} from "@mantine/modals";
+import {ModalsProvider} from "@mantine/modals";
 import PropertiesData = main.PropertiesData;
 import {NavigationOption, WhiteLabelHeader} from "./navigation/WhiteLabelHeader";
 import {ColorsEditScreen} from "./colors/ColorsEditScreen";
 import {MiscPropsEditScreen} from "./misc/MiscPropsEditScreen";
 import {LogPrint} from "../wailsjs/runtime";
 import {FileWithPath} from "@mantine/dropzone";
-import {checkForErrors} from "./utils/ErrorHandler";
-import {getBytesFromFile} from "./utils/FileUtils";
+import {getBytesFromFile, readZipFile} from "./utils/FileUtils";
 
 function App() {
 
@@ -62,13 +59,10 @@ function App() {
                     setAppPackage(appPackage)
                 }} initialSelectedPropPage={selectedPropsPage}/>
             case 1:
-                return <ColorsEditScreen selectedData={getDataByName("colors")}  stateChanger={()=> {
-                    handleChange("colors")
-                }}/>
+                LogPrint("UPDATE COLORS in colors")
+                return <ColorsEditScreen selectedData={getDataByName("colors")}  stateChanger={stageChanger}/>
             case 2:
-                return <MiscPropsEditScreen selectedData={getDataByName("misc_props")}  stateChanger={()=> {
-                    handleChange("misc_props")
-                }}/>
+                return <MiscPropsEditScreen selectedData={getDataByName("misc_props")}  stateChanger={stageChanger}/>
         }
     }
 
@@ -110,8 +104,27 @@ function App() {
         setSelectedData(propsData)
     }
 
+
     const save = () => {
-        const errors = checkForErrors(appName,
+        readZipFile(zipFile).then((zipFile)=> {
+            let zipNamesArr = new Array<string>()
+            let zipNamesBlobs = new Array<string>()
+            zipFile.forEach((value, key) => {
+                zipNamesArr.push(key)
+                zipNamesBlobs.push(value)
+            })
+            getBytesFromFile(jsonFile).then(value =>  {
+                Save(appName, appPackage, envPropertiesData, zipNamesArr, zipNamesBlobs, value).then((err) => {
+                    if(err != null && err.error != null){
+                        LogPrint("Error saving whitelabel")
+                    } else {
+                        LogPrint("Saved")
+                    }
+                })
+            })
+
+        })
+        /*const errors = checkForErrors(appName,
             appPackage,
             zipFile,
             jsonFile)
@@ -130,18 +143,8 @@ function App() {
                 )
             })
         } else {
-            getBytesFromFile(zipFile).then((zipFile)=> {
-                getBytesFromFile(jsonFile).then((jsonValue) => {
-                    Save(appName, appPackage, envPropertiesData, zipFile, jsonValue).then((err) => {
-                        if(err != null && err.error != null){
-                            LogPrint("Error saving whitelabel")
-                        } else {
-                            LogPrint("Saved")
-                        }
-                    })
-                })
-            })
-        }
+
+        }*/
     }
 
     useEffect(() => {

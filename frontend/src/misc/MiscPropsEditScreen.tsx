@@ -2,9 +2,9 @@
 
 import {main} from "../../wailsjs/go/models";
 import PropertiesData = main.PropertiesData;
-import {ChangeEvent, useEffect, useState} from "react";
+import {ChangeEvent, useEffect, useRef, useState} from "react";
 import {modals} from "@mantine/modals";
-import {Button, Card, Grid, Group, Text, TextInput} from "@mantine/core";
+import {Button, Card, Grid, Group, Space, Text, TextInput} from "@mantine/core";
 
 
 export interface MiscEditProps{
@@ -15,6 +15,8 @@ export function MiscPropsEditScreen ({selectedData, stateChanger}: MiscEditProps
     const [selectedPropertyIndex, setSelectedPropertyIndex] = useState(-1)
     const [selectedPropertyValue, setSelectedPropertyValue] = useState("")
     const [selectedPropertyKey, setSelectedPropertyKey] = useState("")
+    const miscPropRef = useRef<HTMLInputElement>(null)
+    const miscPropTitleRef = useRef<HTMLInputElement>(null)
 
     const editProperty = (index: number)=> {
         modals.open({
@@ -47,6 +49,28 @@ export function MiscPropsEditScreen ({selectedData, stateChanger}: MiscEditProps
         })
     }
 
+    const createProperty = () => {
+        modals.open({
+            title: 'Create property',
+            centered: true,
+            children: (
+                <>
+                    <TextInput ref={miscPropTitleRef} label="Property name" placeholder="Property name" data-autofocus />
+                    <TextInput ref={miscPropRef} label="Property value" placeholder="Property value" data-autofocus />
+                    <Button fullWidth onClick={()=> {
+                        // @ts-ignore
+                        selectedData.data.push(miscPropTitleRef.current.value + "=" + miscPropRef.current.value);
+                        stateChanger(selectedData)
+                        modals.closeAll()
+                    }
+                    } mt="md">
+                        Submit
+                    </Button>
+                </>
+            ),
+        });
+    }
+
     const resetEditState = () => {
         setSelectedPropertyValue("")
         setSelectedPropertyKey("")
@@ -61,32 +85,38 @@ export function MiscPropsEditScreen ({selectedData, stateChanger}: MiscEditProps
     },[selectedPropertyIndex, selectedPropertyValue])
 
     return (
-        <Grid columns={3} className={"colors-grid"}>
-            {
-                selectedData.data.map((value, index) => (
-                    <Grid.Col span={1}>
-                        <Card shadow="sm" padding="lg" radius="md" withBorder key={index}>
-                            <Group position="apart" mt="md" mb="xs">
-                                <Text truncate weight={500}>{value.split("=")[0]}</Text>
-                            </Group>
-                            <Group  mt="md" mb="xs">
+        <>
+            <Button variant="filled" onClick={()=>{
+                createProperty()
+            }}>Add new</Button>
+            <Space h={16}/>
+            <Grid columns={3} className={"colors-grid"}>
+                {
+                    selectedData.data.map((value, index) => (
+                        <Grid.Col span={1}>
+                            <Card shadow="sm" padding="lg" radius="md" withBorder key={index}>
+                                <Group position="apart" mt="md" mb="xs">
+                                    <Text truncate weight={500}>{value.split("=")[0]}</Text>
+                                </Group>
+                                <Group  mt="md" mb="xs">
 
-                                <Text truncate>
-                                    {value.split("=")[1]}
-                                </Text>
-                            </Group>
-                            <Button fullWidth mt="md" radius="sm" onClick={()=>{
-                                setSelectedPropertyIndex(index)
-                                const colorParts = selectedData.data[index].split("=")
-                                setSelectedPropertyKey(colorParts[0])
-                                setSelectedPropertyValue(colorParts[1])
-                            }}>
-                                Edit
-                            </Button>
-                        </Card>
-                    </Grid.Col>
-                ))
-            }
-        </Grid>
+                                    <Text truncate>
+                                        {value.split("=")[1]}
+                                    </Text>
+                                </Group>
+                                <Button fullWidth mt="md" radius="sm" onClick={()=>{
+                                    setSelectedPropertyIndex(index)
+                                    const colorParts = selectedData.data[index].split("=")
+                                    setSelectedPropertyKey(colorParts[0])
+                                    setSelectedPropertyValue(colorParts[1])
+                                }}>
+                                    Edit
+                                </Button>
+                            </Card>
+                        </Grid.Col>
+                    ))
+                }
+            </Grid>
+        </>
     )
 }

@@ -5,6 +5,7 @@
     "@mantine/dropzone": "^6.0.11",
     "@mantine/hooks": "^6.0.11",
     "@mantine/modals": "^6.0.11",
-    "@tabler/icons-react": "^2.18.0"
+    "@tabler/icons-react": "^2.18.0",
+    "jszip": "^3.10.1"
   }
 }

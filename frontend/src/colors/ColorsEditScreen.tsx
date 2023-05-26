@@ -2,8 +2,8 @@
 
 import {main} from "../../wailsjs/go/models";
 import PropertiesData = main.PropertiesData;
-import {useEffect, useState} from "react";
-import {Button, Card, ColorInput, ColorSwatch, Grid, Group, Text} from "@mantine/core";
+import {useEffect, useRef, useState} from "react";
+import {Button, Card, ColorInput, ColorSwatch, Grid, Group, Space, Text, TextInput} from "@mantine/core";
 import {modals} from "@mantine/modals";
 
 export interface ColorsEditProps{
@@ -16,6 +16,9 @@ export function ColorsEditScreen({selectedData, stateChanger}: ColorsEditProps) 
     const [selectedPropertyIndex, setSelectedPropertyIndex] = useState(-1)
     const [selectedPropertyValue, setSelectedPropertyValue] = useState("")
     const [selectedPropertyKey, setSelectedPropertyKey] = useState("")
+    const [selectedColorData, setSelectedColorData] = useState(null)
+    const colorRef = useRef<HTMLInputElement>(null)
+    const colorNameRef = useRef<HTMLInputElement>(null)
 
     const editProperty = (index: number)=> {
         modals.open({
@@ -48,6 +51,29 @@ export function ColorsEditScreen({selectedData, stateChanger}: ColorsEditProps) 
         })
     }
 
+    const createProperty = () => {
+        modals.open({
+            title: 'Create color',
+            centered: true,
+            children: (
+                <>
+                    <TextInput ref={colorNameRef} label="Color name" placeholder="Color name" data-autofocus />
+                    <Space h={16}/>
+                    <ColorInput ref={colorRef} />
+                    <Button fullWidth onClick={()=> {
+                        // @ts-ignore
+                        selectedData.data.push(colorNameRef.current.value + "=" + colorRef.current.value);
+                        stateChanger(selectedData)
+                        modals.closeAll()
+                    }
+                    } mt="md">
+                        Submit
+                    </Button>
+                </>
+            ),
+        });
+    }
+
     const resetEditState = () => {
         setSelectedPropertyValue("")
         setSelectedPropertyKey("")
@@ -61,34 +87,47 @@ export function ColorsEditScreen({selectedData, stateChanger}: ColorsEditProps) 
         }
     },[selectedPropertyIndex, selectedPropertyValue])
 
-    return (
-        <Grid columns={3} className={"colors-grid"}>
-            {
-                selectedData.data.map((value, index) => (
-                    <Grid.Col span={1}>
-                        <Card shadow="sm" padding="lg" radius="md" withBorder key={index}>
+    useEffect(() => {
+        if(selectedData != null) {
+            // @ts-ignore
+            setSelectedColorData(selectedData)
+        }
+    }, [selectedData])
 
-                            <Group position="apart" mt="md" mb="xs">
-                                <Text truncate weight={500}>{value.split("=")[0]}</Text>
-                            </Group>
-                            <Group  mt="md" mb="xs">
-                                <ColorSwatch color={value.split("=")[1]}/>
-                                <Text truncate>
-                                    {value.split("=")[1]}
-                                </Text>
-                            </Group>
-                            <Button fullWidth mt="md" radius="sm" onClick={()=>{
-                                setSelectedPropertyIndex(index)
-                                const colorParts = selectedData.data[index].split("=")
-                                setSelectedPropertyKey(colorParts[0])
-                                setSelectedPropertyValue(colorParts[1])
-                            }}>
-                                Edit
-                            </Button>
-                        </Card>
-                    </Grid.Col>
-                ))
-            }
-        </Grid>
+    return (
+        <>
+            <Button variant="filled" onClick={()=>{
+                createProperty()
+            }}>Add new</Button>
+            <Space h={16}/>
+            <Grid columns={3} className={"colors-grid"}>
+                {
+                    selectedData.data.map((value, index) => (
+                        <Grid.Col span={1}>
+                            <Card shadow="sm" padding="lg" radius="md" withBorder key={index}>
+
+                                <Group position="apart" mt="md" mb="xs">
+                                    <Text truncate weight={500}>{value.split("=")[0]}</Text>
+                                </Group>
+                                <Group  mt="md" mb="xs">
+                                    <ColorSwatch color={value.split("=")[1]}/>
+                                    <Text truncate>
+                                        {value.split("=")[1]}
+                                    </Text>
+                                </Group>
+                                <Button fullWidth mt="md" radius="sm" onClick={()=>{
+                                    setSelectedPropertyIndex(index)
+                                    const colorParts = selectedData.data[index].split("=")
+                                    setSelectedPropertyKey(colorParts[0])
+                                    setSelectedPropertyValue(colorParts[1])
+                                }}>
+                                    Edit
+                                </Button>
+                            </Card>
+                        </Grid.Col>
+                    ))
+                }
+            </Grid>
+        </>
     )
 }

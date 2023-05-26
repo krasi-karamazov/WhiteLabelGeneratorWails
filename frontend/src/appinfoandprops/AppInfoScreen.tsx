@@ -1,20 +1,15 @@
 // noinspection DuplicatedCode
 
-import {
-    Button,
-    Card,
-    Grid,
-    Group,
-    Space, Text, TextInput
-} from "@mantine/core";
+import {ActionIcon, Button, Card, Grid, Group, Space, Text, TextInput} from "@mantine/core";
 import {DropArea, MimeType} from "./DropArea";
 import {PropertiesSegmentedControl} from "./PropertiesSegmentedControl";
 import {main} from "../../wailsjs/go/models";
-import PropertiesData = main.PropertiesData;
-import {ChangeEvent, useEffect, useState} from "react";
+import {ChangeEvent, useEffect, useRef, useState} from "react";
 import {SegmentedControlItem} from "@mantine/core/lib/SegmentedControl/SegmentedControl";
-import { modals } from '@mantine/modals';
+import {modals} from '@mantine/modals';
 import {FileWithPath} from "@mantine/dropzone";
+import {IconTrash} from "@tabler/icons-react";
+import PropertiesData = main.PropertiesData;
 
 export interface AppInfoScreenProps{
     onChange: (selected: string) => void
@@ -42,6 +37,8 @@ export function AppInfoScreen ({onChange, selectedData, stateChanger, onJsonFile
     const [selectedPropertyValue, setSelectedPropertyValue] = useState("")
     const [selectedPropertyKey, setSelectedPropertyKey] = useState("")
     const [selectedPropertyData, setSelectedPropertyData] = useState(null)
+    const nameRef = useRef<HTMLInputElement>(null);
+    const valueRef = useRef<HTMLInputElement>(null);
 
     const editProperty = (index: number)=> {
         modals.open({
@@ -65,11 +62,42 @@ export function AppInfoScreen ({onChange, selectedData, stateChanger, onJsonFile
                         }} >
                             Submit
                         </Button>
+                        <ActionIcon color={'red'} variant="filled" onClick={()=> {
+                            const halfBeforeTheUnwantedElement = selectedData.data.slice(0, index)
+                            const halfAfterTheUnwantedElement = selectedData.data.slice(index + 1, selectedData.data.length)
+                            selectedData.data = halfBeforeTheUnwantedElement.concat(halfAfterTheUnwantedElement)
+                            stateChanger(selectedData)
+                            resetEditState()
+                        }}>
+                            <IconTrash size="1.125rem" />
+                        </ActionIcon>
                     </Group>
                 </>
 
             ),
         })
+    }
+
+    const createProperty = () => {
+        modals.open({
+            title: 'Create property',
+            centered: true,
+            children: (
+                <>
+                    <TextInput ref={nameRef} label="Property name" placeholder="Property name" data-autofocus />
+                    <TextInput ref={valueRef} label="Property value" placeholder="Property value" data-autofocus />
+                    <Button fullWidth onClick={()=> {
+                            // @ts-ignore
+                            selectedData.data.push(nameRef.current.value + "=" + valueRef.current.value);
+                            stateChanger(selectedData)
+                            resetEditState()
+                        }
+                    } mt="md">
+                        Submit
+                    </Button>
+                </>
+            ),
+        });
     }
 
     const resetEditState = () => {
@@ -109,13 +137,15 @@ export function AppInfoScreen ({onChange, selectedData, stateChanger, onJsonFile
             <PropertiesSegmentedControl onChange={(selected: string)=> {
                 onChange(selected)
             }} values={propsPages} initialValue={initialSelectedPropPage}/>
+            <Button variant="filled" onClick={()=>{
+                createProperty()
+            }}>Add new</Button>
             <Space h={16}/>
             <Grid columns={3} className={"props-grid"}>
                 {
                     selectedData.data.map((value, index) => (
                         <Grid.Col span={1}>
                             <Card shadow="sm" padding="lg" radius="md" withBorder key={index}>
-
                                 <Group position="apart" mt="md" mb="xs">
                                     <Text truncate weight={500}>{value.split("=")[0]}</Text>
                                 </Group>
