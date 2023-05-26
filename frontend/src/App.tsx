@@ -1,13 +1,13 @@
 import './App.css';
 import {
     LoadingOverlay,
-    MantineProvider
+    MantineProvider, Text
 } from '@mantine/core';
 import {AppInfoScreen} from "./appinfoandprops/AppInfoScreen";
 import {useEffect, useState} from "react";
 import {main} from "../wailsjs/go/models";
 import {ReadProperties, Save} from "../wailsjs/go/main/App";
-import {ModalsProvider} from "@mantine/modals";
+import {modals, ModalsProvider} from "@mantine/modals";
 import PropertiesData = main.PropertiesData;
 import {NavigationOption, WhiteLabelHeader} from "./navigation/WhiteLabelHeader";
 import {ColorsEditScreen} from "./colors/ColorsEditScreen";
@@ -15,6 +15,7 @@ import {MiscPropsEditScreen} from "./misc/MiscPropsEditScreen";
 import {LogPrint} from "../wailsjs/runtime";
 import {FileWithPath} from "@mantine/dropzone";
 import {getBytesFromFile, readZipFile} from "./utils/FileUtils";
+import {checkForErrors} from "./utils/ErrorHandler";
 
 function App() {
 
@@ -106,25 +107,8 @@ function App() {
 
 
     const save = () => {
-        readZipFile(zipFile).then((zipFile)=> {
-            let zipNamesArr = new Array<string>()
-            let zipNamesBlobs = new Array<string>()
-            zipFile.forEach((value, key) => {
-                zipNamesArr.push(key)
-                zipNamesBlobs.push(value)
-            })
-            getBytesFromFile(jsonFile).then(value =>  {
-                Save(appName, appPackage, envPropertiesData, zipNamesArr, zipNamesBlobs, value).then((err) => {
-                    if(err != null && err.error != null){
-                        LogPrint("Error saving whitelabel")
-                    } else {
-                        LogPrint("Saved")
-                    }
-                })
-            })
 
-        })
-        /*const errors = checkForErrors(appName,
+        const errors = checkForErrors(appName,
             appPackage,
             zipFile,
             jsonFile)
@@ -143,8 +127,25 @@ function App() {
                 )
             })
         } else {
+            readZipFile(zipFile).then((zipFile)=> {
+                let zipNamesArr = new Array<string>()
+                let zipNamesBlobs = new Array<string>()
+                zipFile.forEach((value, key) => {
+                    zipNamesArr.push(key)
+                    zipNamesBlobs.push(value)
+                })
+                getBytesFromFile(jsonFile).then(value =>  {
+                    Save(appName, appPackage, envPropertiesData, zipNamesArr, zipNamesBlobs, value).then((err) => {
+                        if(err != null && err.error != null){
+                            LogPrint("Error saving whitelabel")
+                        } else {
+                            LogPrint("Saved")
+                        }
+                    })
+                })
 
-        }*/
+            })
+        }
     }
 
     useEffect(() => {
