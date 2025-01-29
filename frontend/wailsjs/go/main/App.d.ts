@@ -4,4 +4,4 @@ import {main} from '../models';
 
 export function ReadProperties():Promise<Array<main.PropertiesData>>;
 
-export function Save(arg1:string,arg2:string,arg3:Array<main.PropertiesData>,arg4:Array<string>,arg5:Array<string>,arg6:Array<number>):Promise<main.SaveError>;
+export function Save(arg1:string,arg2:string,arg3:Array<main.PropertiesData>,arg4:string,arg5:string):Promise<main.SaveError>;

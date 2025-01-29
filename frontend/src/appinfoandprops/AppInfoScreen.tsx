@@ -15,13 +15,14 @@ export interface AppInfoScreenProps{
     onChange: (selected: string) => void
     selectedData: PropertiesData
     stateChanger: (propsData: PropertiesData) => void
-    onJsonFileReady:(jsonFile: FileWithPath) => void
+    onGoogleServicesJsonReady:(jsonFile: FileWithPath) => void
+    onColorsDataReady:(jsonFile: FileWithPath) => void
     onZipReady:(jsonFile: FileWithPath) => void
     onAppNameChange: (appName: string) => void
     onPackageChange: (packageName: string) => void
     initialSelectedPropPage: string
 }
-export function AppInfoScreen ({onChange, selectedData, stateChanger, onJsonFileReady, onZipReady, onAppNameChange, onPackageChange, initialSelectedPropPage}: AppInfoScreenProps) {
+export function AppInfoScreen ({onChange, selectedData, stateChanger, onGoogleServicesJsonReady, onColorsDataReady, onZipReady, onAppNameChange, onPackageChange, initialSelectedPropPage}: AppInfoScreenProps) {
     const propsPages: SegmentedControlItem[] = [{
         label: "Staging",
         value: "staging"
@@ -130,8 +131,8 @@ export function AppInfoScreen ({onChange, selectedData, stateChanger, onJsonFile
             </Grid>
             <Space h={16}/>
             <Grid columns={2}>
-                <Grid.Col span={1}><DropArea mimeType={MimeType.zip} normalText={"Drop your icons zip here"} onSelect={onZipReady}/></Grid.Col>
-                <Grid.Col span={1}><DropArea mimeType={MimeType.json} normalText={"Drop your google services json"} onSelect={onJsonFileReady}/></Grid.Col>
+                <Grid.Col span={1}><DropArea mimeType={MimeType.json} normalText={"Drop your google services json"} onSelect={onGoogleServicesJsonReady}/></Grid.Col>
+                <Grid.Col span={1}><DropArea mimeType={MimeType.json} normalText={"Drop your colors json"} onSelect={onColorsDataReady}/></Grid.Col>
             </Grid>
             <Space h={16}/>
             <PropertiesSegmentedControl onChange={(selected: string)=> {

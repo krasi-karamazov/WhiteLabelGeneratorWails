@@ -7,11 +7,11 @@ import (
 )
 
 func filesToRead() []string {
-	return []string{"stage-release.properties", "playstore.properties", "non-playstore.properties", "colors", "misc_props"}
+	return []string{"stage-release.properties", "playstore.properties", "non-playstore.properties", "misc_props"}
 }
 
 func propsNames() []string {
-	return []string{"staging", "playstore", "nonplaystore", "colors", "misc_props"}
+	return []string{"staging", "playstore", "nonplaystore", "misc_props"}
 }
 
 // App struct

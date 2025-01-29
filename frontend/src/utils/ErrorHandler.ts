@@ -12,9 +12,9 @@ export function checkForErrors(appName: string,
         errors.push("The application package cannot be empty")
     }
 
-    if(zipFile == null) {
+    /*if(zipFile == null) {
         errors.push("You need to add a zip file with the app icons")
-    }
+    }*/
 
     if(jsonFile == null) {
         errors.push("You need to add a json file with the google services data")

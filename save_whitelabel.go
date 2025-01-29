@@ -2,12 +2,12 @@ package main
 
 import (
 	"encoding/base64"
-	"main/fileutils"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
-func (a *App) Save(appName string, appPackage string, data []PropertiesData, zipFileNames []string, zipFileBlobs []string, jsonFile []byte) *SaveError {
+func (a *App) Save(appName string, appPackage string, data []PropertiesData, googleServicesFileData string, colorsFileData string) *SaveError {
 	var saveErrorPtr *SaveError = nil
 	var errorType string
 	err := writePropertiesData(appName, data)
@@ -16,12 +16,23 @@ func (a *App) Save(appName string, appPackage string, data []PropertiesData, zip
 	if err != nil {
 		errorType = errType
 	}
-	err, errType = writeZipFile(appName, zipFileNames, zipFileBlobs)
+
+	err, errType = writeFile(appName, "google-services.json", googleServicesFileData)
 	if err != nil {
 		errorType = errType
 	}
 
-	err, errType = writeJsonFile(appName, jsonFile)
+	lightColors, darkColors, err := parseColors(colorsFileData)
+	if err != nil {
+		return nil
+	}
+
+	err, errType = writeFile(appName, filepath.Join("res", "values", "colors.xml"), lightColors)
+	if err != nil {
+		errorType = errType
+	}
+
+	err, errType = writeFile(appName, filepath.Join("res", "values-night", "colors.xml"), darkColors)
 	if err != nil {
 		errorType = errType
 	}
@@ -41,13 +52,12 @@ func (a *App) Save(appName string, appPackage string, data []PropertiesData, zip
 	return saveErrorPtr
 }
 
-func writeJsonFile(appName string, jsonFile []byte) (error, string) {
-	const gsonFileName = "google-services.json"
-	file, err := fileutils.CreateFile(appName+"\\", gsonFileName)
+func writeFile(appName string, fileName string, fileData string) (error, string) {
+	file, err := CreateFile(appName+"\\", fileName)
 	if err != nil {
 		return err, "json_file_creating"
 	}
-	_, err = file.Write(jsonFile)
+	_, err = file.Write([]byte(fileData))
 	defer func(file *os.File) {
 		err := file.Close()
 		if err != nil {
@@ -99,17 +109,13 @@ func writeZipFile(appName string, zipFileNames []string, zipFileBlobs []string) 
 
 func writeClientFlavor(appName string, data []PropertiesData) (error, string) {
 	fileName := "client_flavor.xml"
-	file, err := fileutils.CreateFile(appName+"\\res\\values\\", fileName)
+	file, err := CreateFile(filepath.Join(appName, "res", "values"), fileName)
 	if err != nil {
 		return err, "file_creation"
 	}
 	_, err = file.WriteString("<?xml version=\"1.0\" encoding=\"utf-8\"?>\r<resources>\n")
 	if err != nil {
 		return err, "file_xml_namespace"
-	}
-	err = writeColors(file, data)
-	if err != nil {
-		return err, "file_colors"
 	}
 
 	err = writeMisc(file, data)
@@ -140,17 +146,11 @@ func writeMisc(file *os.File, data []PropertiesData) error {
 	return err
 }
 
-func writeColors(file *os.File, data []PropertiesData) error {
-	colorsData := getPropsByName("colors", data)
-	_, err := file.WriteString(colorsData.toXmlString())
-	return err
-}
-
 func writePropertiesData(appName string, data []PropertiesData) error {
 	fileNames := []string{appName + "-stage-release.properties", appName + "-playstore.properties", appName + "-non-playstore.properties"}
 
 	for i := range fileNames {
-		file, err := fileutils.CreateFile(appName, fileNames[i])
+		file, err := CreateFile(appName, fileNames[i])
 		defer func(file *os.File) {
 			err := file.Close()
 			if err != nil {
@@ -183,8 +183,13 @@ func writeGradleFile(appName string, appPackage string) (error, string) {
 	appNameSet := strings.Replace(fileDataAsString, "[app-name]", appName, 1)
 	appPackageSet := strings.Replace(appNameSet, "[app-package]", appPackage, 1)
 
-	file, err := fileutils.CreateFile(appName, "build.gradle")
-	defer file.Close()
+	file, err := CreateFile(appName, "build.gradle")
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+
+		}
+	}(file)
 	if err != nil {
 		return err, "creating_gradle_file"
 	}

@@ -1,4 +1,4 @@
-package fileutils
+package main
 
 import (
 	"errors"
@@ -12,15 +12,16 @@ func CreateFile(dir string, fileName string) (*os.File, error) {
 
 func checkIfFileExistsOtherwiseCreate(dir string, fileName string) (*os.File, error) {
 	if currentWorkingDir, dirEr := os.Getwd(); dirEr == nil {
-		desiredPath := currentWorkingDir + string(filepath.Separator) + dir
-		desiredFilePath := desiredPath + string(filepath.Separator) + fileName
-		_, err := os.Stat(desiredPath)
+		desiredPath := filepath.Join(currentWorkingDir, dir)
+		desiredFilePath := filepath.Join(desiredPath, fileName)
+		_, err := os.Stat(desiredFilePath)
 		if err != nil && os.IsNotExist(err) {
-			mkDirErr := os.MkdirAll(desiredPath, os.ModePerm)
+			mkDirErr := os.MkdirAll(desiredFilePath, os.ModePerm)
 			if mkDirErr != nil {
 				return nil, err
 			}
 			return createFile(desiredFilePath)
+
 		} else {
 			return createFile(desiredFilePath)
 		}
@@ -35,7 +36,7 @@ func createFile(path string) (*os.File, error) {
 			return nil, err
 		}
 	}
-	if file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+	if file, err := os.Create(path); err == nil {
 		return file, nil
 	} else {
 		return nil, err

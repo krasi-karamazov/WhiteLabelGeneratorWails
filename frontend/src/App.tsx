@@ -14,7 +14,7 @@ import {ColorsEditScreen} from "./colors/ColorsEditScreen";
 import {MiscPropsEditScreen} from "./misc/MiscPropsEditScreen";
 import {LogPrint} from "../wailsjs/runtime";
 import {FileWithPath} from "@mantine/dropzone";
-import {getBytesFromFile, readZipFile} from "./utils/FileUtils";
+import {readFile, readZipFile} from "./utils/FileUtils";
 import {checkForErrors} from "./utils/ErrorHandler";
 
 function App() {
@@ -29,16 +29,15 @@ function App() {
     // @ts-ignore
     const [zipFile, setZipFile] = useState<FileWithPath>(null)
     // @ts-ignore
-    const [jsonFile, setJsonFile] = useState<FileWithPath >(null)
+    const [googleServicesFile, setGoogleServicesFile] = useState<FileWithPath >(null)
+    // @ts-ignore
+    const [colorsDataFile, setColorsDataFile] = useState<FileWithPath >(null)
     const [selectedPropsPage, setSelectedPropsPage] = useState("staging")
 
     const links = [
         {
             link:NavigationOption.AppProperties,
             label:"App properties"
-        }, {
-            link:NavigationOption.Colors,
-            label:"Colors"
         },{
             link:NavigationOption.Misc,
             label:"Misc"
@@ -54,13 +53,12 @@ function App() {
             case 0:
                 return <AppInfoScreen selectedData={getDataByName(selectedPropsPage)} onChange={(selected: string) => {
                     handlePropsPageChange(selected)
-                }} stateChanger={stageChanger} onZipReady={setZipFile} onJsonFileReady={setJsonFile} onAppNameChange={(appName: string)=> {
+                }} stateChanger={stageChanger} onZipReady={setZipFile} onGoogleServicesJsonReady={setGoogleServicesFile} onAppNameChange={(appName: string)=> {
                     setAppName(appName)
                 }} onPackageChange={(appPackage: string)=> {
                     setAppPackage(appPackage)
-                }} initialSelectedPropPage={selectedPropsPage}/>
+                }} initialSelectedPropPage={selectedPropsPage} onColorsDataReady={setColorsDataFile}/>
             case 1:
-                LogPrint("UPDATE COLORS in colors")
                 return <ColorsEditScreen selectedData={getDataByName("colors")}  stateChanger={stageChanger}/>
             case 2:
                 return <MiscPropsEditScreen selectedData={getDataByName("misc_props")}  stateChanger={stageChanger}/>
@@ -111,7 +109,7 @@ function App() {
         const errors = checkForErrors(appName,
             appPackage,
             zipFile,
-            jsonFile)
+            googleServicesFile)
         if(errors.length > 0) {
             modals.open({
                 title: "There be errors. Argh!",
@@ -127,15 +125,10 @@ function App() {
                 )
             })
         } else {
-            readZipFile(zipFile).then((zipFile)=> {
-                let zipNamesArr = new Array<string>()
-                let zipNamesBlobs = new Array<string>()
-                zipFile.forEach((value, key) => {
-                    zipNamesArr.push(key)
-                    zipNamesBlobs.push(value)
-                })
-                getBytesFromFile(jsonFile).then(value =>  {
-                    Save(appName, appPackage, envPropertiesData, zipNamesArr, zipNamesBlobs, value).then((err) => {
+
+            readFile(googleServicesFile).then(googleServicesFileData =>  {
+                readFile(colorsDataFile).then(colorsData => {
+                    Save(appName, appPackage, envPropertiesData, googleServicesFileData, colorsData).then((err) => {
                         if(err != null && err.error != null){
                             LogPrint("Error saving whitelabel")
                         } else {
@@ -143,8 +136,19 @@ function App() {
                         }
                     })
                 })
-
             })
+            /*readZipFile(zipFile).then((zipFile)=> {
+                LogPrint("Save")
+                let zipNamesArr = new Array<string>()
+                let zipNamesBlobs = new Array<string>()
+                zipFile.forEach((value, key) => {
+                    zipNamesArr.push(key)
+                    zipNamesBlobs.push(value)
+                })
+
+
+
+            })*/
         }
     }
 
